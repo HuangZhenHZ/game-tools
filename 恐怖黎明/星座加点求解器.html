@@ -4,12 +4,11 @@
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
+  <title>恐怖黎明星座加点求解器</title>
   <style>
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 20px;
     }
     th, td {
       border: 1px solid #ccc;
@@ -25,12 +24,21 @@
     .banned {
       background-color: #f88;
     }
-    .partly_choosed {
+    .partly_choose {
       background-color: yellow;
     }
   </style>
 </head>
-  <button id="solve_button" onclick="Solve()">求解</button>
+  使用方法：
+  <ol>
+    <li>点击“操作”列的数字按钮，表示对应的星座最终必须恰好点亮这么多星星。<br>例如：点击“石夫人~维尔”左边的“6(点满)”，表示需要点满“石夫人~维尔”的6颗星。点击“曼海尔的方尖碑”左边的“3”，表示需要恰好点亮“曼海尔的方尖碑”其中的3颗星。</li>
+    <li>点击“求解”按钮，会自动计算出最终需要点满的其他星座。（使用的总点数不会超过55点）</li>
+    <li>如果有解，可以尝试选择更多的星座，或者禁用不想要的星座，然后再次点击“求解”按钮。</li>
+    <li>如果无解，可以尝试减少限制条件，即点击被选择或禁用的星座左边的“取消”按钮，然后再次点击“求解”按钮。</li>
+  </ol>
+  总虔诚点数：55<br>
+  您已选定的点数：<span id="choose_points">0</span><br><br>
+  <button id="solve_button" onclick="Solve()">求解</button> 《==求解按钮在这
   <table id="table">
     <tr>
       <th rowspan="2">操作</th>
@@ -53,17 +61,21 @@
       <th>原始(蓝)</th>
     </tr>
   </table>
+  <br>恐怖黎明星座加点求解器 v0.1
+  <br>作者：名字不好起/名字不好起HZ
+  <br>作者贴吧ID：圣殿骑士即游侠
+  <br><a href="https://github.com/HuangZhenHZ/game-tools/blob/main/%E6%81%90%E6%80%96%E9%BB%8E%E6%98%8E/%E6%98%9F%E5%BA%A7%E5%8A%A0%E7%82%B9%E6%B1%82%E8%A7%A3%E5%99%A8.html" target="_blank">点此访问github地址</a>
 <body>
 
 <script>
 "use strict";
 
 var constellations = [
-  {name:'抉择之地~升灵(紫)', cost:1, r0:1, r1:0, r2:0, r3:0, r4:0, b0:1, b1:0, b2:0, b3:0, b4:0},
-  {name:'抉择之地~混乱(红)', cost:1, r0:0, r1:1, r2:0, r3:0, r4:0, b0:0, b1:1, b2:0, b3:0, b4:0},
-  {name:'抉择之地~敬畏(绿)', cost:1, r0:0, r1:0, r2:1, r3:0, r4:0, b0:0, b1:0, b2:1, b3:0, b4:0},
-  {name:'抉择之地~秩序(黄)', cost:1, r0:0, r1:0, r2:0, r3:1, r4:0, b0:0, b1:0, b2:0, b3:1, b4:0},
-  {name:'抉择之地~原始(蓝)', cost:1, r0:0, r1:0, r2:0, r3:0, r4:1, b0:0, b1:0, b2:0, b3:0, b4:1},
+  {name:'抉择之地~升灵(紫)', cost:1, r0:0, r1:0, r2:0, r3:0, r4:0, b0:1, b1:0, b2:0, b3:0, b4:0},
+  {name:'抉择之地~混乱(红)', cost:1, r0:0, r1:0, r2:0, r3:0, r4:0, b0:0, b1:1, b2:0, b3:0, b4:0},
+  {name:'抉择之地~敬畏(绿)', cost:1, r0:0, r1:0, r2:0, r3:0, r4:0, b0:0, b1:0, b2:1, b3:0, b4:0},
+  {name:'抉择之地~秩序(黄)', cost:1, r0:0, r1:0, r2:0, r3:0, r4:0, b0:0, b1:0, b2:0, b3:1, b4:0},
+  {name:'抉择之地~原始(蓝)', cost:1, r0:0, r1:0, r2:0, r3:0, r4:0, b0:0, b1:0, b2:0, b3:0, b4:1},
   {name:'石夫人~维尔', cost:6, r0:12, r1:0, r2:0, r3:0, r4:18, b0:0, b1:0, b2:0, b3:0, b4:0},
   {name:'邪术之阳~寇瓦克', cost:6, r0:0, r1:0, r2:10, r3:0, r4:18, b0:0, b1:0, b2:0, b3:0, b4:0},
   {name:'冬季之灵~阿玛托克', cost:7, r0:0, r1:0, r2:4, r3:0, r4:6, b0:0, b1:0, b2:1, b3:0, b4:1},
@@ -171,6 +183,7 @@ var constellations = [
 ]
 
 var table = document.getElementById("table");
+var choose_points_span = document.getElementById("choose_points");
 
 for (let i = 0; i < constellations.length; ++i) {
   let con = constellations[i]
@@ -188,16 +201,16 @@ for (let i = 0; i < constellations.length; ++i) {
   new_row.devo_col.innerHTML = "_";
   let name_col = new_row.insertCell(); name_col.innerHTML = con.name;
   let cost_col = new_row.insertCell(); cost_col.innerHTML = con.cost;
-  let r0_col = new_row.insertCell(); r0_col.innerHTML = con.r0;
-  let r1_col = new_row.insertCell(); r1_col.innerHTML = con.r1;
-  let r2_col = new_row.insertCell(); r2_col.innerHTML = con.r2;
-  let r3_col = new_row.insertCell(); r3_col.innerHTML = con.r3;
-  let r4_col = new_row.insertCell(); r4_col.innerHTML = con.r4;
-  let b0_col = new_row.insertCell(); b0_col.innerHTML = con.b0;
-  let b1_col = new_row.insertCell(); b1_col.innerHTML = con.b1;
-  let b2_col = new_row.insertCell(); b2_col.innerHTML = con.b2;
-  let b3_col = new_row.insertCell(); b3_col.innerHTML = con.b3;
-  let b4_col = new_row.insertCell(); b4_col.innerHTML = con.b4;
+  let r0_col = new_row.insertCell(); if (con.r0 > 0) { r0_col.innerHTML = con.r0; }
+  let r1_col = new_row.insertCell(); if (con.r1 > 0) { r1_col.innerHTML = con.r1; }
+  let r2_col = new_row.insertCell(); if (con.r2 > 0) { r2_col.innerHTML = con.r2; }
+  let r3_col = new_row.insertCell(); if (con.r3 > 0) { r3_col.innerHTML = con.r3; }
+  let r4_col = new_row.insertCell(); if (con.r4 > 0) { r4_col.innerHTML = con.r4; }
+  let b0_col = new_row.insertCell(); if (con.b0 > 0) { b0_col.innerHTML = con.b0; }
+  let b1_col = new_row.insertCell(); if (con.b1 > 0) { b1_col.innerHTML = con.b1; }
+  let b2_col = new_row.insertCell(); if (con.b2 > 0) { b2_col.innerHTML = con.b2; }
+  let b3_col = new_row.insertCell(); if (con.b3 > 0) { b3_col.innerHTML = con.b3; }
+  let b4_col = new_row.insertCell(); if (con.b4 > 0) { b4_col.innerHTML = con.b4; }
 }
 
 function ClearResult() {
@@ -207,6 +220,17 @@ function ClearResult() {
       con.row.className = ""
     }
   }
+}
+
+function RefreshChoosePoints() {
+  let points = 0
+  for (let i = 0; i < constellations.length; ++i) {
+    let con = constellations[i]
+    if (con.devo != undefined) {
+      points += con.devo
+    }
+  }
+  choose_points_span.innerText = points
 }
 
 function Choose(button, devo) {
@@ -220,8 +244,9 @@ function Choose(button, devo) {
   } else if (devo == con.cost) {
     row.className = "choose_by_user"
   } else {
-    row.className = "partly_choosed"
+    row.className = "partly_choose"
   }
+  RefreshChoosePoints()
 }
 
 function Cancel(button) {
@@ -231,6 +256,7 @@ function Cancel(button) {
   con.devo = undefined
   row.devo_col.innerText = "_"
   row.className = ""
+  RefreshChoosePoints()
 }
 
 const total_points = 55
@@ -240,6 +266,7 @@ var fmx1 = []
 var fmx2 = []
 var fmx3 = []
 var fmx4 = []
+var fmxs = []
 
 function InitDp(cons) {
   fmx0 = []
@@ -247,17 +274,20 @@ function InitDp(cons) {
   fmx2 = []
   fmx3 = []
   fmx4 = []
+  fmxs = []
   fmx0[cons.length] = []
   fmx1[cons.length] = []
   fmx2[cons.length] = []
   fmx3[cons.length] = []
   fmx4[cons.length] = []
+  fmxs[cons.length] = []
   for (let j = 0; j <= total_points; ++j) {
     fmx0[cons.length][j] = 0
     fmx1[cons.length][j] = 0
     fmx2[cons.length][j] = 0
     fmx3[cons.length][j] = 0
     fmx4[cons.length][j] = 0
+    fmxs[cons.length][j] = 0
   }
   for (let i = cons.length - 1; i >= 0; --i) {
     let con = cons[i]
@@ -266,6 +296,7 @@ function InitDp(cons) {
     fmx2[i] = []
     fmx3[i] = []
     fmx4[i] = []
+    fmxs[i] = []
     for (let j = 0; j <= total_points; ++j) {
       let k = j - con.cost
       if (k >= 0) {
@@ -274,12 +305,14 @@ function InitDp(cons) {
         fmx2[i][j] = Math.max(fmx2[i + 1][j], fmx2[i + 1][k] + con.b2)
         fmx3[i][j] = Math.max(fmx3[i + 1][j], fmx3[i + 1][k] + con.b3)
         fmx4[i][j] = Math.max(fmx4[i + 1][j], fmx4[i + 1][k] + con.b4)
+        fmxs[i][j] = Math.max(fmxs[i + 1][j], fmxs[i + 1][k] + con.b0 + con.b1 + con.b2 + con.b3 + con.b4)
       } else {
         fmx0[i][j] = fmx0[i + 1][j]
         fmx1[i][j] = fmx1[i + 1][j]
         fmx2[i][j] = fmx2[i + 1][j]
         fmx3[i][j] = fmx3[i + 1][j]
         fmx4[i][j] = fmx4[i + 1][j]
+        fmxs[i][j] = fmxs[i + 1][j]
       }
     }
   }
@@ -297,6 +330,14 @@ function Dfs(cons, index, remain_points, r0, r1, r2, r3, r4, x0, x1, x2, x3, x4)
       fmx2[index][remain_points] < r2 - x2 ||
       fmx3[index][remain_points] < r3 - x3 ||
       fmx4[index][remain_points] < r4 - x4) {
+    return false
+  }
+  let sum = Math.max(0, r0 - x0) +
+            Math.max(0, r1 - x1) +
+            Math.max(0, r2 - x2) +
+            Math.max(0, r3 - x3) +
+            Math.max(0, r4 - x4)
+  if (fmxs[index][remain_points] < sum) {
     return false
   }
   if (Dfs(cons, index + 1, remain_points, r0, r1, r2, r3, r4, x0, x1, x2, x3, x4)) {
