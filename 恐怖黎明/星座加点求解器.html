@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <style>
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      text-align: center;
+      padding: 2px;
+    }
+    .choose_by_user {
+      background-color: #8f8;
+    }
+    .choose_by_solver {
+      background-color: #88f;
+    }
+    .banned {
+      background-color: #f88;
+    }
+    .partly_choosed {
+      background-color: yellow;
+    }
+  </style>
+</head>
+  <button id="solve_button" onclick="Solve()">求解</button>
+  <table id="table">
+    <tr>
+      <th rowspan="2">操作</th>
+      <th rowspan="2">点亮星星数</th>
+      <th rowspan="2">星座</th>
+      <th rowspan="2">星星数</th>
+      <th colspan="5">需要亲和点数</th>
+      <th colspan="5">完整星座奖励</th>
+    </tr>
+    <tr>
+      <th>升灵(紫)</th>
+      <th>混乱(红)</th>
+      <th>敬畏(绿)</th>
+      <th>秩序(黄)</th>
+      <th>原始(蓝)</th>
+      <th>升灵(紫)</th>
+      <th>混乱(红)</th>
+      <th>敬畏(绿)</th>
+      <th>秩序(黄)</th>
+      <th>原始(蓝)</th>
+    </tr>
+  </table>
+<body>
+
+<script>
+"use strict";
+
+var constellations = [
+  {name:'抉择之地~升灵(紫)', cost:1, r0:1, r1:0, r2:0, r3:0, r4:0, b0:1, b1:0, b2:0, b3:0, b4:0},
+  {name:'抉择之地~混乱(红)', cost:1, r0:0, r1:1, r2:0, r3:0, r4:0, b0:0, b1:1, b2:0, b3:0, b4:0},
+  {name:'抉择之地~敬畏(绿)', cost:1, r0:0, r1:0, r2:1, r3:0, r4:0, b0:0, b1:0, b2:1, b3:0, b4:0},
+  {name:'抉择之地~秩序(黄)', cost:1, r0:0, r1:0, r2:0, r3:1, r4:0, b0:0, b1:0, b2:0, b3:1, b4:0},
+  {name:'抉择之地~原始(蓝)', cost:1, r0:0, r1:0, r2:0, r3:0, r4:1, b0:0, b1:0, b2:0, b3:0, b4:1},
+  {name:'石夫人~维尔', cost:6, r0:12, r1:0, r2:0, r3:0, r4:18, b0:0, b1:0, b2:0, b3:0, b4:0},
+  {name:'邪术之阳~寇瓦克', cost:6, r0:0, r1:0, r2:10, r3:0, r4:18, b0:0, b1:0, b2:0, b3:0, b4:0},
+  {name:'冬季之灵~阿玛托克', cost:7, r0:0, r1:0, r2:4, r3:0, r4:6, b0:0, b1:0, b2:1, b3:0, b4:1},
+  {name:'生命之树', cost:6, r0:0, r1:0, r2:0, r3:7, r4:20, b0:0, b1:0, b2:0, b3:0, b4:0},
+  {name:'春之少女~伊师塔克', cost:6, r0:0, r1:0, r2:0, r3:10, r4:15, b0:0, b1:0, b2:0, b3:0, b4:0},
+  {name:'伊恩的沙漏', cost:6, r0:0, r1:8, r2:0, r3:0, r4:18, b0:0, b1:0, b2:0, b3:0, b4:0},
+  {name:'天堂之矛', cost:6, r0:0, r1:7, r2:0, r3:0, r4:20, b0:0, b1:0, b2:0, b3:0, b4:0},
+  {name:'北海巨妖', cost:5, r0:0, r1:0, r2:5, r3:0, r4:5, b0:0, b1:2, b2:0, b3:0, b4:3},
+  {name:'寡妇', cost:6, r0:0, r1:0, r2:6, r3:0, r4:4, b0:0, b1:0, b2:0, b3:0, b4:3},
+  {name:'莱托什的权杖', cost:6, r0:0, r1:3, r2:0, r3:3, r4:6, b0:0, b1:2, b2:0, b3:0, b4:3},
+  {name:'残暴之熊', cost:6, r0:5, r1:0, r2:0, r3:0, r4:5, b0:1, b1:0, b2:0, b3:0, b4:1},
+  {name:'水域看守者~艾尔洛', cost:5, r0:0, r1:0, r2:0, r3:4, r4:6, b0:0, b1:0, b2:0, b3:2, b4:3},
+  {name:'至高之神的圣光', cost:7, r0:0, r1:0, r2:0, r3:8, r4:18, b0:0, b1:0, b2:0, b3:0, b4:0},
+  {name:'垂死之神', cost:7, r0:0, r1:8, r2:0, r3:0, r4:15, b0:0, b1:0, b2:0, b3:0, b4:0},
+  {name:'亡魂', cost:6, r0:0, r1:8, r2:0, r3:0, r4:0, b0:0, b1:1, b2:0, b3:0, b4:1},
+  {name:'战争先驱', cost:6, r0:3, r1:0, r2:0, r3:0, r4:7, b0:0, b1:2, b2:0, b3:0, b4:3},
+  {name:'雷电风暴', cost:7, r0:5, r1:0, r2:0, r3:0, r4:5, b0:0, b1:0, b2:1, b3:0, b4:1},
+  {name:'幽灵', cost:4, r0:0, r1:0, r2:0, r3:0, r4:1, b0:3, b1:0, b2:0, b3:0, b4:3},
+  {name:'绞刑架', cost:4, r0:0, r1:0, r2:0, r3:0, r4:1, b0:0, b1:0, b2:0, b3:0, b4:5},
+  {name:'圣甲虫', cost:4, r0:0, r1:0, r2:0, r3:0, r4:1, b0:0, b1:0, b2:0, b3:2, b4:3},
+  {name:'雄鹿', cost:4, r0:0, r1:0, r2:0, r3:1, r4:0, b0:0, b1:0, b2:0, b3:2, b4:3},
+  {name:'莲花', cost:4, r0:0, r1:0, r2:0, r3:1, r4:0, b0:0, b1:0, b2:3, b3:2, b4:0},
+  {name:'庄严守望者', cost:5, r0:0, r1:0, r2:0, r3:0, r4:10, b0:0, b1:0, b2:0, b3:2, b4:3},
+  {name:'女武神', cost:6, r0:0, r1:0, r2:0, r3:4, r4:6, b0:0, b1:0, b2:0, b3:2, b4:3},
+  {name:'曼海尔的方尖碑', cost:7, r0:0, r1:0, r2:0, r3:8, r4:15, b0:0, b1:0, b2:0, b3:0, b4:0},
+  {name:'猎豹', cost:4, r0:0, r1:0, r2:0, r3:1, r4:0, b0:0, b1:0, b2:0, b3:2, b4:3},
+  {name:'猎犬', cost:3, r0:0, r1:0, r2:0, r3:0, r4:1, b0:0, b1:0, b2:0, b3:0, b4:4},
+  {name:'海鳗', cost:3, r0:0, r1:0, r2:0, r3:0, r4:1, b0:0, b1:0, b2:0, b3:0, b4:5},
+  {name:'蜥蜴', cost:3, r0:0, r1:0, r2:0, r3:0, r4:1, b0:0, b1:0, b2:0, b3:0, b4:4},
+  {name:'死亡战车', cost:7, r0:5, r1:0, r2:5, r3:0, r4:0, b0:0, b1:2, b2:3, b3:0, b4:0},
+  {name:'秃鹫', cost:5, r0:0, r1:1, r2:0, r3:0, r4:0, b0:0, b1:5, b2:0, b3:0, b4:0},
+  {name:'豺狼', cost:3, r0:0, r1:1, r2:0, r3:0, r4:0, b0:0, b1:3, b2:0, b3:0, b4:0},
+  {name:'毒蛇', cost:4, r0:0, r1:1, r2:0, r3:0, r4:0, b0:0, b1:2, b2:0, b3:0, b4:3},
+  {name:'海啸', cost:5, r0:0, r1:0, r2:0, r3:0, r4:1, b0:0, b1:0, b2:0, b3:0, b4:5},
+  {name:'水手的指针', cost:4, r0:0, r1:0, r2:0, r3:0, r4:1, b0:0, b1:0, b2:0, b3:0, b4:5},
+  {name:'公牛', cost:5, r0:0, r1:0, r2:0, r3:0, r4:1, b0:0, b1:0, b2:0, b3:2, b4:3},
+  {name:'森林女神', cost:5, r0:0, r1:0, r2:0, r3:1, r4:0, b0:0, b1:0, b2:0, b3:3, b4:0},
+  {name:'艾尔卡玛的天平', cost:6, r0:0, r1:0, r2:0, r3:8, r4:0, b0:0, b1:0, b2:0, b3:2, b4:0},
+  {name:'无尽贪夜~尤戈尔', cost:6, r0:0, r1:7, r2:20, r3:0, r4:0, b0:0, b1:0, b2:0, b3:0, b4:0},
+  {name:'温迪戈', cost:6, r0:0, r1:4, r2:0, r3:0, r4:6, b0:0, b1:2, b2:0, b3:0, b4:0},
+  {name:'螳螂', cost:4, r0:0, r1:1, r2:0, r3:0, r4:0, b0:3, b1:2, b2:0, b3:0, b4:0},
+  {name:'魔王', cost:5, r0:0, r1:1, r2:0, r3:0, r4:0, b0:0, b1:2, b2:3, b3:0, b4:0},
+  {name:'不幸者', cost:4, r0:0, r1:1, r2:0, r3:0, r4:0, b0:0, b1:2, b2:0, b3:0, b4:3},
+  {name:'小恶魔', cost:5, r0:0, r1:0, r2:0, r3:0, r4:1, b0:0, b1:0, b2:3, b3:0, b4:3},
+  {name:'乌龟', cost:5, r0:0, r1:0, r2:0, r3:1, r4:0, b0:0, b1:0, b2:0, b3:2, b4:3},
+  {name:'狮子', cost:3, r0:0, r1:0, r2:0, r3:1, r4:0, b0:0, b1:0, b2:0, b3:3, b4:0},
+  {name:'刺客的利刃', cost:5, r0:0, r1:0, r2:0, r3:1, r4:0, b0:3, b1:0, b2:0, b3:2, b4:0},
+  {name:'刺客', cost:7, r0:6, r1:0, r2:0, r3:4, r4:0, b0:1, b1:0, b2:0, b3:1, b4:0},
+  {name:'纳丹的刀刃', cost:6, r0:10, r1:0, r2:0, r3:0, r4:0, b0:3, b1:0, b2:0, b3:2, b4:0},
+  {name:'吟游诗人的竖琴', cost:6, r0:6, r1:0, r2:0, r3:3, r4:6, b0:0, b1:0, b2:0, b3:2, b4:2},
+  {name:'永恒之沙~阿兹拉卡', cost:6, r0:12, r1:0, r2:0, r3:6, r4:8, b0:0, b1:0, b2:0, b3:0, b4:0},
+  {name:'索拉尔的巫术之刃', cost:5, r0:0, r1:4, r2:6, r3:0, r4:0, b0:0, b1:1, b2:1, b3:0, b4:0},
+  {name:'食尸鬼', cost:5, r0:0, r1:1, r2:0, r3:0, r4:0, b0:0, b1:3, b2:0, b3:0, b4:0},
+  {name:'蝙蝠', cost:5, r0:0, r1:0, r2:1, r3:0, r4:0, b0:0, b1:2, b2:3, b3:0, b4:0},
+  {name:'老鼠', cost:4, r0:0, r1:1, r2:0, r3:0, r4:0, b0:0, b1:2, b2:3, b3:0, b4:0},
+  {name:'鹰隼', cost:5, r0:1, r1:0, r2:0, r3:0, r4:0, b0:3, b1:0, b2:3, b3:0, b4:0},
+  {name:'仙鹤', cost:5, r0:0, r1:0, r2:0, r3:1, r4:0, b0:0, b1:0, b2:0, b3:5, b4:0},
+  {name:'铁锤', cost:3, r0:1, r1:0, r2:0, r3:0, r4:0, b0:4, b1:0, b2:0, b3:0, b4:0},
+  {name:'铁砧', cost:5, r0:1, r1:0, r2:0, r3:0, r4:0, b0:5, b1:0, b2:0, b3:0, b4:0},
+  {name:'建造者~塔戈', cost:7, r0:0, r1:0, r2:0, r3:4, r4:6, b0:0, b1:0, b2:0, b3:1, b4:0},
+  {name:'奥祖因的火炬', cost:7, r0:0, r1:8, r2:15, r3:0, r4:0, b0:0, b1:0, b2:0, b3:0, b4:0},
+  {name:'九头蛇', cost:6, r0:3, r1:3, r2:5, r3:0, r4:0, b0:0, b1:2, b2:3, b3:0, b4:0},
+  {name:'狂战士', cost:6, r0:5, r1:0, r2:5, r3:0, r4:0, b0:0, b1:2, b2:3, b3:0, b4:0},
+  {name:'蜘蛛', cost:5, r0:0, r1:0, r2:1, r3:0, r4:0, b0:0, b1:0, b2:6, b3:0, b4:0},
+  {name:'守护者之眼', cost:5, r0:0, r1:0, r2:1, r3:0, r4:0, b0:3, b1:0, b2:3, b3:0, b4:0},
+  {name:'阿卡隆的天蝎', cost:5, r0:0, r1:0, r2:1, r3:0, r4:0, b0:0, b1:0, b2:5, b3:0, b4:0},
+  {name:'牧羊杖', cost:5, r0:1, r1:0, r2:0, r3:0, r4:0, b0:5, b1:0, b2:0, b3:0, b4:0},
+  {name:'夜爪', cost:4, r0:1, r1:0, r2:0, r3:0, r4:0, b0:3, b1:2, b2:0, b3:0, b4:0},
+  {name:'鹰身女妖', cost:4, r0:1, r1:0, r2:0, r3:0, r4:0, b0:5, b1:0, b2:0, b3:0, b4:0},
+  {name:'天国之门的守护者~海瑞恩', cost:6, r0:6, r1:0, r2:8, r3:0, r4:0, b0:2, b1:0, b2:0, b3:0, b4:2},
+  {name:'魔法长者', cost:7, r0:0, r1:0, r2:10, r3:0, r4:0, b0:0, b1:0, b2:3, b3:0, b4:0},
+  {name:'拜斯迈的羁绊', cost:5, r0:0, r1:4, r2:6, r3:0, r4:0, b0:0, b1:0, b2:3, b3:0, b4:0},
+  {name:'乌鸦', cost:4, r0:0, r1:0, r2:1, r3:0, r4:0, b0:0, b1:0, b2:5, b3:0, b4:0},
+  {name:'狐狸', cost:4, r0:0, r1:0, r2:1, r3:0, r4:0, b0:0, b1:0, b2:5, b3:0, b4:0},
+  {name:'羽毛笔', cost:4, r0:0, r1:0, r2:1, r3:0, r4:0, b0:3, b1:0, b2:3, b3:0, b4:0},
+  {name:'学者之光', cost:3, r0:0, r1:0, r2:1, r3:0, r4:0, b0:0, b1:0, b2:4, b3:0, b4:0},
+  {name:'猎鹰', cost:3, r0:0, r1:0, r2:1, r3:0, r4:0, b0:0, b1:0, b2:3, b3:0, b4:0},
+  {name:'猫头鹰', cost:4, r0:1, r1:0, r2:0, r3:0, r4:0, b0:5, b1:0, b2:0, b3:0, b4:0},
+  {name:'蟾蜍', cost:4, r0:1, r1:0, r2:0, r3:0, r4:0, b0:3, b1:0, b2:3, b3:0, b4:0},
+  {name:'寇瓦克的使者~奥扎德', cost:6, r0:8, r1:0, r2:0, r3:0, r4:6, b0:2, b1:0, b2:2, b3:0, b4:0},
+  {name:'无名士兵', cost:7, r0:15, r1:0, r2:0, r3:8, r4:0, b0:0, b1:0, b2:0, b3:0, b4:0},
+  {name:'憎恶', cost:8, r0:0, r1:8, r2:18, r3:0, r4:0, b0:0, b1:0, b2:0, b3:0, b4:0},
+  {name:'比蒙巨兽', cost:6, r0:0, r1:3, r2:4, r3:0, r4:4, b0:0, b1:2, b2:3, b3:0, b4:0},
+  {name:'奥克莱尼的灯笼', cost:5, r0:0, r1:0, r2:10, r3:0, r4:0, b0:0, b1:0, b2:3, b3:2, b4:0},
+  {name:'谣言夫人~穆谟', cost:6, r0:0, r1:3, r2:6, r3:0, r4:6, b0:0, b1:2, b2:2, b3:0, b4:0},
+  {name:'狮蝎', cost:6, r0:0, r1:4, r2:6, r3:0, r4:0, b0:1, b1:0, b2:1, b3:0, b4:0},
+  {name:'收割者的镰刀', cost:6, r0:3, r1:0, r2:0, r3:3, r4:5, b0:3, b1:0, b2:0, b3:0, b4:3},
+  {name:'虚位王座', cost:4, r0:1, r1:0, r2:0, r3:0, r4:0, b0:5, b1:0, b2:0, b3:0, b4:0},
+  {name:'罗万的皇冠', cost:5, r0:4, r1:0, r2:6, r3:0, r4:0, b0:1, b1:0, b2:1, b3:0, b4:0},
+  {name:'灵魂狱卒~堤丰', cost:6, r0:6, r1:3, r2:0, r3:3, r4:0, b0:3, b1:0, b2:0, b3:2, b4:0},
+  {name:'罗万的权杖', cost:6, r0:6, r1:0, r2:0, r3:4, r4:0, b0:3, b1:0, b2:0, b3:2, b4:0},
+  {name:'风暴牧羊人~尤尔托斯', cost:6, r0:0, r1:6, r2:10, r3:0, r4:10, b0:0, b1:0, b2:0, b3:0, b4:0},
+  {name:'阿拉德拉的凤凰', cost:5, r0:0, r1:0, r2:6, r3:3, r4:6, b0:2, b1:0, b2:2, b3:0, b4:0},
+  {name:'苦难', cost:7, r0:4, r1:3, r2:4, r3:0, r4:0, b0:1, b1:0, b2:1, b3:0, b4:0},
+  {name:'狼神莫格卓根', cost:6, r0:15, r1:0, r2:12, r3:0, r4:0, b0:0, b1:0, b2:0, b3:0, b4:0},
+  {name:'女猎手', cost:7, r0:4, r1:3, r2:4, r3:0, r4:0, b0:1, b1:0, b2:1, b3:0, b4:0},
+  {name:'狼獾', cost:5, r0:1, r1:0, r2:0, r3:0, r4:0, b0:6, b1:0, b2:0, b3:0, b4:0},
+  {name:'螃蟹', cost:5, r0:6, r1:0, r2:0, r3:4, r4:0, b0:3, b1:0, b2:0, b3:0, b4:0},
+  {name:'深秋野猪', cost:7, r0:4, r1:0, r2:0, r3:3, r4:4, b0:3, b1:0, b2:0, b3:0, b4:0},
+  {name:'奥莱隆', cost:7, r0:20, r1:0, r2:0, r3:7, r4:0, b0:0, b1:0, b2:0, b3:0, b4:0},
+  {name:'盲眼圣者', cost:7, r0:10, r1:0, r2:18, r3:0, r4:0, b0:0, b1:0, b2:0, b3:0, b4:0},
+  {name:'暗影守望者~莱托什', cost:6, r0:0, r1:6, r2:10, r3:6, r4:0, b0:0, b1:0, b2:0, b3:0, b4:0},
+  {name:'幻影~阿塔克瑟如', cost:6, r0:16, r1:0, r2:14, r3:0, r4:0, b0:0, b1:0, b2:0, b3:0, b4:0},
+  {name:'海怪~利维坦', cost:7, r0:13, r1:0, r2:13, r3:0, r4:0, b0:0, b1:0, b2:0, b3:0, b4:0},
+]
+
+var table = document.getElementById("table");
+
+for (let i = 0; i < constellations.length; ++i) {
+  let con = constellations[i]
+  let new_row = table.insertRow()
+  new_row.to_con = con
+  con.row = new_row
+  let op_col = new_row.insertCell();
+  op_col.innerHTML = '<button onclick="Cancel(this)">取消</button>'
+  op_col.innerHTML += '\n<button onclick="Choose(this, 0)">0 (禁用)</button>'
+  for (let c = 1; c < con.cost; ++c) {
+    op_col.innerHTML += '\n<button onclick="Choose(this, ' + c + ')">' + c + '</button>'
+  }
+  op_col.innerHTML += '\n<button onclick="Choose(this, ' + con.cost + ')">' + con.cost + ' (点满)</button>'
+  new_row.devo_col = new_row.insertCell();
+  new_row.devo_col.innerHTML = "_";
+  let name_col = new_row.insertCell(); name_col.innerHTML = con.name;
+  let cost_col = new_row.insertCell(); cost_col.innerHTML = con.cost;
+  let r0_col = new_row.insertCell(); r0_col.innerHTML = con.r0;
+  let r1_col = new_row.insertCell(); r1_col.innerHTML = con.r1;
+  let r2_col = new_row.insertCell(); r2_col.innerHTML = con.r2;
+  let r3_col = new_row.insertCell(); r3_col.innerHTML = con.r3;
+  let r4_col = new_row.insertCell(); r4_col.innerHTML = con.r4;
+  let b0_col = new_row.insertCell(); b0_col.innerHTML = con.b0;
+  let b1_col = new_row.insertCell(); b1_col.innerHTML = con.b1;
+  let b2_col = new_row.insertCell(); b2_col.innerHTML = con.b2;
+  let b3_col = new_row.insertCell(); b3_col.innerHTML = con.b3;
+  let b4_col = new_row.insertCell(); b4_col.innerHTML = con.b4;
+}
+
+function ClearResult() {
+  for (let i = 0; i < constellations.length; ++i) {
+    let con = constellations[i]
+    if (con.row.className == "choose_by_solver") {
+      con.row.className = ""
+    }
+  }
+}
+
+function Choose(button, devo) {
+  ClearResult()
+  let row = button.parentNode.parentNode
+  let con = row.to_con
+  con.devo = devo
+  row.devo_col.innerText = con.devo
+  if (devo == 0) {
+    row.className = "banned"
+  } else if (devo == con.cost) {
+    row.className = "choose_by_user"
+  } else {
+    row.className = "partly_choosed"
+  }
+}
+
+function Cancel(button) {
+  ClearResult()
+  let row = button.parentNode.parentNode
+  let con = row.to_con
+  con.devo = undefined
+  row.devo_col.innerText = "_"
+  row.className = ""
+}
+
+const total_points = 55
+
+var fmx0 = []
+var fmx1 = []
+var fmx2 = []
+var fmx3 = []
+var fmx4 = []
+
+function InitDp(cons) {
+  fmx0 = []
+  fmx1 = []
+  fmx2 = []
+  fmx3 = []
+  fmx4 = []
+  fmx0[cons.length] = []
+  fmx1[cons.length] = []
+  fmx2[cons.length] = []
+  fmx3[cons.length] = []
+  fmx4[cons.length] = []
+  for (let j = 0; j <= total_points; ++j) {
+    fmx0[cons.length][j] = 0
+    fmx1[cons.length][j] = 0
+    fmx2[cons.length][j] = 0
+    fmx3[cons.length][j] = 0
+    fmx4[cons.length][j] = 0
+  }
+  for (let i = cons.length - 1; i >= 0; --i) {
+    let con = cons[i]
+    fmx0[i] = []
+    fmx1[i] = []
+    fmx2[i] = []
+    fmx3[i] = []
+    fmx4[i] = []
+    for (let j = 0; j <= total_points; ++j) {
+      let k = j - con.cost
+      if (k >= 0) {
+        fmx0[i][j] = Math.max(fmx0[i + 1][j], fmx0[i + 1][k] + con.b0)
+        fmx1[i][j] = Math.max(fmx1[i + 1][j], fmx1[i + 1][k] + con.b1)
+        fmx2[i][j] = Math.max(fmx2[i + 1][j], fmx2[i + 1][k] + con.b2)
+        fmx3[i][j] = Math.max(fmx3[i + 1][j], fmx3[i + 1][k] + con.b3)
+        fmx4[i][j] = Math.max(fmx4[i + 1][j], fmx4[i + 1][k] + con.b4)
+      } else {
+        fmx0[i][j] = fmx0[i + 1][j]
+        fmx1[i][j] = fmx1[i + 1][j]
+        fmx2[i][j] = fmx2[i + 1][j]
+        fmx3[i][j] = fmx3[i + 1][j]
+        fmx4[i][j] = fmx4[i + 1][j]
+      }
+    }
+  }
+}
+
+function Dfs(cons, index, remain_points, r0, r1, r2, r3, r4, x0, x1, x2, x3, x4) {
+  if (x0 >= r0 && x1 >= r1 && x2 >= r2 && x3 >= r3 && x4 >= r4) {
+    return true
+  }
+  if (index >= cons.length) {
+    return false
+  }
+  if (fmx0[index][remain_points] < r0 - x0 ||
+      fmx1[index][remain_points] < r1 - x1 ||
+      fmx2[index][remain_points] < r2 - x2 ||
+      fmx3[index][remain_points] < r3 - x3 ||
+      fmx4[index][remain_points] < r4 - x4) {
+    return false
+  }
+  if (Dfs(cons, index + 1, remain_points, r0, r1, r2, r3, r4, x0, x1, x2, x3, x4)) {
+    return true
+  }
+  let con = cons[index]
+  if (remain_points >= con.cost) {
+    if (Dfs(cons, index + 1, remain_points - con.cost,
+            Math.max(r0, con.r0),
+            Math.max(r1, con.r1),
+            Math.max(r2, con.r2),
+            Math.max(r3, con.r3),
+            Math.max(r4, con.r4),
+            x0 + con.b0,
+            x1 + con.b1,
+            x2 + con.b2,
+            x3 + con.b3,
+            x4 + con.b4)) {
+      con.row.className = "choose_by_solver"
+      return true
+    }
+  }
+  return false
+}
+
+function Solve() {
+  ClearResult()
+  let remain_points = total_points
+  let r0 = 0, r1 = 0, r2 = 0, r3 = 0, r4 = 0
+  let x0 = 0, x1 = 0, x2 = 0, x3 = 0, x4 = 0
+  let cons = new Array()
+  for (let i = 0; i < constellations.length; ++i) {
+    let con = constellations[i]
+    if (con.devo == undefined) {
+      cons.push(con)
+    } else {
+      remain_points -= con.devo
+      if (con.devo > 0) {
+        r0 = Math.max(r0, con.r0)
+        r1 = Math.max(r1, con.r1)
+        r2 = Math.max(r2, con.r2)
+        r3 = Math.max(r3, con.r3)
+        r4 = Math.max(r4, con.r4)
+      }
+      if (con.devo >= con.cost) {
+        x0 += con.b0
+        x1 += con.b1
+        x2 += con.b2
+        x3 += con.b3
+        x4 += con.b4
+      }
+    }
+  }
+  if (remain_points < 0) {
+    alert("求解失败，您选择的星星数已经超过" + total_points)
+    return
+  }
+  InitDp(cons)
+  if (Dfs(cons, 0, remain_points, r0, r1, r2, r3, r4, x0, x1, x2, x3, x4)) {
+    alert("求解成功，最终需要点满的其他星座已经标为蓝色")
+  } else {
+    alert("求解失败，无法满足条件")
+  }
+}
+
+</script>
+</body>
+</html>
